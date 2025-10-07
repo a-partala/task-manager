@@ -1,6 +1,7 @@
 package net.partala.tasks_manager.tasks;
 
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.Null;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -58,7 +59,9 @@ public class TaskService {
             Long id,
             Task taskToUpdate
     ) {
-        var taskEntity = repository.findById(id).orElseThrow(() -> new NoSuchElementException(
+        var taskEntity = repository
+                .findById(id)
+                .orElseThrow(() -> new NoSuchElementException(
             "Not found task with id = " + id
         ));
         if(taskEntity.getStatus() == TaskStatus.DONE) {
@@ -84,5 +87,34 @@ public class TaskService {
         }
 
         repository.deleteById(id);
+    }
+
+    public Task startTask(
+            Long taskId,
+            Long assignedUserId
+    ) {
+
+        if(assignedUserId == null || assignedUserId <= 0) {
+            throw new IllegalArgumentException("Incorrect user id, id = " + assignedUserId);
+        }
+
+        var taskToStart = repository
+                .findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Not found task with id = " + taskId
+                ));
+
+        var userTasks = repository.getAllTasksAssignedToUser(assignedUserId);
+        int tasksLimit = 5;
+        if(userTasks.size() >= tasksLimit) {
+            throw new IllegalStateException("Cannot assign task to user, he already has " + tasksLimit);
+        }
+
+        taskToStart.setStatus(TaskStatus.IN_PROGRESS);
+        taskToStart.setAssignedUserId(assignedUserId);
+
+        var savedTask = repository.save(taskToStart);
+
+        return mapper.toDomain(savedTask);
     }
 }

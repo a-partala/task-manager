@@ -68,9 +68,8 @@ public class TaskController {
                 .body(updatedTask);
     }
 
-
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> updateTask(
+    public ResponseEntity<Void> deleteTask(
             @PathVariable Long id
     ) {
         log.info("Called deleteTask, id = {}", id);
@@ -79,5 +78,22 @@ public class TaskController {
 
         log.info("Task deleted successfully, id = {}", id);
         return ResponseEntity.status(HttpStatus.OK).build();
+    }
+
+    @PostMapping("/{taskId}/start")
+    public ResponseEntity<Task> startTask(
+            @PathVariable Long taskId,
+            @RequestBody Long assignedUserId
+    ) {
+        log.info("Called startTask, id = {}", taskId);
+
+        var startedTask = service.startTask(
+                taskId,
+                assignedUserId
+        );
+
+        log.info("Task started successfully, id = {}", taskId);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(startedTask);
     }
 }
