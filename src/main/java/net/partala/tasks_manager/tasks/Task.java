@@ -3,6 +3,7 @@ package net.partala.tasks_manager.tasks;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
+import org.hibernate.annotations.Filter;
 
 import java.time.LocalDateTime;
 
@@ -13,6 +14,7 @@ public record Task (
 
         String title,
 
+        @NotNull
         Long creatorId,
 
         Long assignedUserId,
@@ -23,8 +25,13 @@ public record Task (
         @Null
         LocalDateTime createDateTime,
 
+        @NotNull @Future
         LocalDateTime deadlineDate,
 
+        @Null
+        LocalDateTime doneDateTime,
+
+        @NotNull
         TaskPriority priority
 ) {
 }

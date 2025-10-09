@@ -32,10 +32,25 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks(){
-        log.info("Called getAllTasks");
+    public ResponseEntity<List<Task>> searchAllByFilter(
+            @RequestParam(value = "creatorId", required = false) Long creatorId,
+            @RequestParam(value = "assignedUserId", required = false) Long assignedUserId,
+            @RequestParam(value = "status", required = false) TaskStatus status,
+            @RequestParam(value = "priority", required = false) TaskPriority priority,
+            @RequestParam(value = "pageSize", required = false) Integer pageSize,
+            @RequestParam(value = "pageNum", required = false) Integer pageNum
+    ){
+        log.info("Called getTasksWithFilter");
+        var filter = new TaskSearchFilter(
+                creatorId,
+                assignedUserId,
+                status,
+                priority,
+                pageSize,
+                pageNum
+        );
 
-        var tasks = service.getAllTasks();
+        var tasks = service.searchAllByFilter(filter);
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(tasks);
@@ -49,7 +64,6 @@ public class TaskController {
 
         var createdTask = service.createTask(taskToCreate);
 
-        log.info("Task created successfully, createdTask = {}", createdTask);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createdTask);
     }
@@ -63,7 +77,6 @@ public class TaskController {
 
         var updatedTask = service.updateTask(id, taskToUpdate);
 
-        log.info("Task updated successfully, id = {}, updatedTask = {}", id, updatedTask);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(updatedTask);
     }
@@ -76,7 +89,6 @@ public class TaskController {
 
         service.deleteTask(id);
 
-        log.info("Task deleted successfully, id = {}", id);
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
@@ -92,8 +104,21 @@ public class TaskController {
                 assignedUserId
         );
 
-        log.info("Task started successfully, id = {}", taskId);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(startedTask);
+    }
+
+    @PostMapping("/{id}/complete")
+    public ResponseEntity<Task> completeTask(
+            @PathVariable Long id
+    ) {
+        log.info("Called completeTask, id = {}", id);
+
+        var completedTask = service.completeTask(
+                id
+        );
+
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(completedTask);
     }
 }

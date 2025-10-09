@@ -1,12 +1,10 @@
 package net.partala.tasks_manager.tasks;
 
 import jakarta.persistence.EntityNotFoundException;
-import jakarta.validation.constraints.Null;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -50,9 +48,11 @@ public class TaskService {
         var taskToSave = mapper.toEntity(taskToCreate);
         taskToSave.setStatus(TaskStatus.CREATED);
         taskToSave.setCreateDateTime(LocalDateTime.now());
-        var savedTask = repository.save(taskToSave);
+        var savedTaskEntity = repository.save(taskToSave);
 
-        return mapper.toDomain(savedTask);
+        var savedTask = mapper.toDomain(savedTaskEntity);
+        log.info("Task created successfully, createdTask = {}", savedTask);
+        return savedTask;
     }
 
     public Task updateTask(
@@ -76,6 +76,7 @@ public class TaskService {
 
         var updatedTask = repository.save(taskToSave);
 
+        log.info("Task updated successfully, id = {}, updatedTask = {}", id, updatedTask);
         return mapper.toDomain(updatedTask);
     }
 
@@ -87,6 +88,7 @@ public class TaskService {
         }
 
         repository.deleteById(id);
+        log.info("Task deleted successfully, id = {}", id);
     }
 
     public Task startTask(
@@ -94,20 +96,24 @@ public class TaskService {
             Long assignedUserId
     ) {
 
-        if(assignedUserId == null || assignedUserId <= 0) {
-            throw new IllegalArgumentException("Incorrect user id, id = " + assignedUserId);
-        }
-
         var taskToStart = repository
                 .findById(taskId)
                 .orElseThrow(() -> new NoSuchElementException(
                         "Not found task with id = " + taskId
                 ));
 
-        var userTasks = repository.getAllTasksAssignedToUser(assignedUserId);
-        int tasksLimit = 5;
-        if(userTasks.size() >= tasksLimit) {
-            throw new IllegalStateException("Cannot assign task to user, he already has " + tasksLimit);
+        if(assignedUserId == null || assignedUserId <= 0) {
+            throw new IllegalArgumentException("Incorrect user id, id = " + assignedUserId);
+        }
+
+        if(!taskToStart.getAssignedUserId()
+                .equals(assignedUserId)) {
+
+            var userTasks = repository.getAllTasksAssignedToUser(assignedUserId);
+            int tasksLimit = 5;
+            if(userTasks.size() >= tasksLimit) {
+                throw new IllegalStateException("Cannot assign task to user, he already has " + tasksLimit);
+            }
         }
 
         taskToStart.setStatus(TaskStatus.IN_PROGRESS);
@@ -115,6 +121,49 @@ public class TaskService {
 
         var savedTask = repository.save(taskToStart);
 
+        log.info("Task started successfully, id = {}", taskId);
         return mapper.toDomain(savedTask);
+    }
+
+    public Task completeTask(
+            Long id
+    ) {
+
+        var taskToComplete = repository
+                .findById(id)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Not found task with id = " + id
+                ));
+        if(taskToComplete.getDeadlineDate() == null
+        || taskToComplete.getAssignedUserId() == null) {
+            throw new IllegalArgumentException("Task doesn't have essential data");
+        }
+        taskToComplete.setStatus(TaskStatus.DONE);
+        taskToComplete.setDoneDateTime(LocalDateTime.now());
+
+        var savedTask = repository.save(taskToComplete);
+
+        log.info("Task completed successfully, id = {}", id);
+        return mapper.toDomain(savedTask);
+    }
+
+    public List<Task> searchAllByFilter(TaskSearchFilter filter) {
+
+        int pageSize = filter.pageSize() != null ?
+                filter.pageSize() : 10;
+        int pageNum = filter.pageSize() != null ?
+                filter.pageNum() : 0;
+
+        Pageable pageable = Pageable
+                .ofSize(pageSize)
+                .withPage(pageNum);
+
+        return repository.searchAllByFilter(
+                filter.creatorId(),
+                filter.assignedUserId(),
+                filter.status(),
+                filter.priority(),
+                pageable
+        );
     }
 }

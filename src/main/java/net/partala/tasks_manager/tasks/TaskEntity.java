@@ -35,6 +35,8 @@ public class TaskEntity {
 
     private LocalDateTime deadlineDate;
 
+    private LocalDateTime doneDateTime;
+
     @Enumerated(EnumType.STRING)
     private TaskPriority priority;
 }
