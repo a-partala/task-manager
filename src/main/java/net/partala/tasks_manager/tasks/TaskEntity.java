@@ -1,20 +1,20 @@
 package net.partala.tasks_manager.tasks;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Null;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.partala.tasks_manager.users.UserEntity;
 
 import java.time.LocalDateTime;
 
-@Entity
-@Table(name = "tasks")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@Entity
+@Table(name = "tasks")
 public class TaskEntity {
 
     @Id
@@ -24,9 +24,13 @@ public class TaskEntity {
 
     private String title;
 
-    private Long creatorId;
+    @ManyToOne
+    @JoinColumn(name = "creator_id")
+    private UserEntity creator;
 
-    private Long assignedUserId;
+    @ManyToOne
+    @JoinColumn(name = "assigned_user_id")
+    private UserEntity assignedUser;
 
     @Enumerated(EnumType.STRING)
     private TaskStatus status;

@@ -3,11 +3,10 @@ package net.partala.tasks_manager.tasks;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Null;
-import org.hibernate.annotations.Filter;
 
 import java.time.LocalDateTime;
 
-public record Task (
+public record Task(
 
         @Null
         Long id,

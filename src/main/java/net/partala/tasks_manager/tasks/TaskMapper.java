@@ -1,5 +1,6 @@
 package net.partala.tasks_manager.tasks;
 
+import net.partala.tasks_manager.users.UserEntity;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -10,8 +11,12 @@ public class TaskMapper {
         return new Task(
                 entity.getId(),
                 entity.getTitle(),
-                entity.getCreatorId(),
-                entity.getAssignedUserId(),
+                entity.getCreator() == null ?
+                    null :
+                    entity.getCreator().getId(),
+                entity.getAssignedUser() == null ?
+                        null :
+                        entity.getAssignedUser().getId(),
                 entity.getStatus(),
                 entity.getCreateDateTime(),
                 entity.getDeadlineDate(),
@@ -20,12 +25,12 @@ public class TaskMapper {
         );
     }
 
-    public TaskEntity toEntity(Task task) {
+    public TaskEntity toEntity(Task task, UserEntity creator, UserEntity assignedUser) {
         return new TaskEntity(
                 task.id(),
                 task.title(),
-                task.creatorId(),
-                task.assignedUserId(),
+                creator,
+                assignedUser,
                 task.status(),
                 task.createDateTime(),
                 task.deadlineDate(),

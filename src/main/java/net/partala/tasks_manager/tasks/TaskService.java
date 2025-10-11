@@ -1,10 +1,12 @@
 package net.partala.tasks_manager.tasks;
 
 import jakarta.persistence.EntityNotFoundException;
+import net.partala.tasks_manager.users.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -15,10 +17,12 @@ public class TaskService {
 
     private static final Logger log = LoggerFactory.getLogger(TaskService.class);
     private final TaskRepository repository;
+    private final UserService userService;
     private final TaskMapper mapper;
 
-    public TaskService(TaskRepository repository, TaskMapper mapper) {
+    public TaskService(TaskRepository repository, UserService userService, TaskMapper mapper) {
         this.repository = repository;
+        this.userService = userService;
         this.mapper = mapper;
     }
 
@@ -33,19 +37,16 @@ public class TaskService {
         return mapper.toDomain(taskEntity);
     }
 
-    public List<Task> getAllTasks() {
-        var tasks = repository.findAll();
-
-        return tasks
-                .stream()
-                .map(mapper::toDomain)
-                .toList();
-    }
-
     public Task createTask(
             Task taskToCreate
     ) {
-        var taskToSave = mapper.toEntity(taskToCreate);
+        var creator = userService.getUserEntityById(
+                taskToCreate.creatorId());
+        var assignUser = taskToCreate.assignedUserId() == null ?
+                null :
+                userService.getUserEntityById(
+                    taskToCreate.assignedUserId());
+        var taskToSave = mapper.toEntity(taskToCreate, creator, assignUser);
         taskToSave.setStatus(TaskStatus.CREATED);
         taskToSave.setCreateDateTime(LocalDateTime.now());
         var savedTaskEntity = repository.save(taskToSave);
@@ -55,6 +56,7 @@ public class TaskService {
         return savedTask;
     }
 
+    @Transactional
     public Task updateTask(
             Long id,
             Task taskToUpdate
@@ -68,13 +70,14 @@ public class TaskService {
             throw new IllegalStateException("Cannot update done task. Change state first. id = " + id);
         }
 
-        var taskToSave = mapper.toEntity(taskToUpdate);
-        taskToSave.setId(taskEntity.getId());
-        taskToSave.setCreateDateTime(taskEntity.getCreateDateTime());
-        taskToSave.setCreateDateTime(taskToUpdate.createDateTime());
-        taskToSave.setStatus(taskToUpdate.status());
+        taskEntity.setAssignedUser(
+                userService.getUserEntityById(
+                        taskToUpdate.assignedUserId()));
+        taskEntity.setTitle(taskToUpdate.title());
+        taskEntity.setPriority(taskToUpdate.priority());
+        taskEntity.setDeadlineDate(taskToUpdate.deadlineDate());
 
-        var updatedTask = repository.save(taskToSave);
+        var updatedTask = repository.save(taskEntity);
 
         log.info("Task updated successfully, id = {}, updatedTask = {}", id, updatedTask);
         return mapper.toDomain(updatedTask);
@@ -91,40 +94,44 @@ public class TaskService {
         log.info("Task deleted successfully, id = {}", id);
     }
 
+    @Transactional
     public Task startTask(
             Long taskId,
-            Long assignedUserId
+            Long assignUserWithId
     ) {
 
-        var taskToStart = repository
-                .findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Not found task with id = " + taskId
-                ));
-
-        if(assignedUserId == null || assignedUserId <= 0) {
-            throw new IllegalArgumentException("Incorrect user id, id = " + assignedUserId);
+        if(assignUserWithId == null || assignUserWithId <= 0) {
+            throw new IllegalArgumentException("Incorrect user id, id = " + assignUserWithId);
         }
 
-        if(!taskToStart.getAssignedUserId()
-                .equals(assignedUserId)) {
+        var taskEntityToStart = repository
+                .findById(taskId)
+                .orElseThrow(() -> new NoSuchElementException(
+                        "Cannot find task with id = " + taskId
+                ));
 
-            var userTasks = repository.getAllTasksAssignedToUser(assignedUserId);
-            int tasksLimit = 5;
-            if(userTasks.size() >= tasksLimit) {
-                throw new IllegalStateException("Cannot assign task to user, he already has " + tasksLimit);
+        if(!taskEntityToStart.getAssignedUser().getId()
+                .equals(assignUserWithId)) {
+
+            if(userService.canUserTakeTask(assignUserWithId)) {
+                taskEntityToStart.setAssignedUser(
+                        userService.getUserEntityById(assignUserWithId)
+                );
+            } else {
+                throw new IllegalStateException("Cannot assign task to user, he already has max allowed amount");
+
             }
         }
 
-        taskToStart.setStatus(TaskStatus.IN_PROGRESS);
-        taskToStart.setAssignedUserId(assignedUserId);
+        taskEntityToStart.setStatus(TaskStatus.IN_PROGRESS);
 
-        var savedTask = repository.save(taskToStart);
+        var savedTask = repository.save(taskEntityToStart);
 
         log.info("Task started successfully, id = {}", taskId);
         return mapper.toDomain(savedTask);
     }
 
+    @Transactional
     public Task completeTask(
             Long id
     ) {
@@ -135,7 +142,7 @@ public class TaskService {
                         "Not found task with id = " + id
                 ));
         if(taskToComplete.getDeadlineDate() == null
-        || taskToComplete.getAssignedUserId() == null) {
+        || taskToComplete.getAssignedUser() == null) {
             throw new IllegalArgumentException("Task doesn't have essential data");
         }
         taskToComplete.setStatus(TaskStatus.DONE);
@@ -151,7 +158,7 @@ public class TaskService {
 
         int pageSize = filter.pageSize() != null ?
                 filter.pageSize() : 10;
-        int pageNum = filter.pageSize() != null ?
+        int pageNum = filter.pageNum() != null ?
                 filter.pageNum() : 0;
 
         Pageable pageable = Pageable
@@ -164,6 +171,9 @@ public class TaskService {
                 filter.status(),
                 filter.priority(),
                 pageable
-        );
+        )
+                .stream()
+                .map(mapper::toDomain)
+                .toList();
     }
 }
