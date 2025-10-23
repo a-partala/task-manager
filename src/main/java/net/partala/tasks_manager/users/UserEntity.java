@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import net.partala.tasks_manager.auth.RegistrationRequest;
 import net.partala.tasks_manager.tasks.TaskEntity;
 
 import java.time.LocalDateTime;
@@ -24,13 +25,16 @@ public class UserEntity {
     private Long id;
 
     @Column(unique = true)
-    private String login;
+    private String username;
 
     private String email;
 
     private String password;
 
     private LocalDateTime registrationDateTime;
+
+    @Enumerated(EnumType.STRING)
+    private UserRole role;
 
     @JsonIgnore
     @OneToMany(mappedBy = "assignedUser")

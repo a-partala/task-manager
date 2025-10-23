@@ -25,6 +25,9 @@ public record User(
         LocalDateTime registrationDateTime,
 
         @Null
+        UserRole role,
+
+        @Null
         List<Long> assignedTaskIds
 ) {
 }

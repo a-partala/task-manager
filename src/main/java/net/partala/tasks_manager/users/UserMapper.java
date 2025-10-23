@@ -12,10 +12,11 @@ public class UserMapper {
 
         return new User(
                 entity.getId(),
-                entity.getLogin(),
+                entity.getUsername(),
                 entity.getEmail(),
                 entity.getPassword(),
                 entity.getRegistrationDateTime(),
+                entity.getRole(),
                 entity.getTasks() == null ?
                         null :
                         entity.getTasks()
@@ -32,6 +33,7 @@ public class UserMapper {
                 task.email(),
                 task.password(),
                 task.registrationDateTime(),
+                task.role(),
                 tasks
         );
     }

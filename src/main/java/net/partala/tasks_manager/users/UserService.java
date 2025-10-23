@@ -1,8 +1,10 @@
 package net.partala.tasks_manager.users;
 
+import net.partala.tasks_manager.auth.RegistrationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -15,15 +17,18 @@ public class UserService {
     private final UserRepository repository;
     private final UserMapper mapper;
     private final UserProperties properties;
+    private final PasswordEncoder passwordEncoder;
 
     public UserService(
             UserRepository repository,
             UserMapper mapper,
-            UserProperties properties
+            UserProperties properties,
+            PasswordEncoder passwordEncoder
     ) {
         this.repository = repository;
         this.mapper = mapper;
         this.properties = properties;
+        this.passwordEncoder = passwordEncoder;
     }
 
     public User getUserById(Long id) {
@@ -55,18 +60,25 @@ public class UserService {
         return userTasks.size() < properties.getAssignedTasksLimit();
     }
 
-    public User createUser(
-            User userToCreate
+    public void createUser(
+            RegistrationRequest registrationRequest
     ) {
-        var userToSave = mapper.toEntity(userToCreate, null);
+        var userToSave = new UserEntity();
+        userToSave.setUsername(registrationRequest.username());
+        userToSave.setEmail(registrationRequest.email());
+        userToSave.setPassword(passwordEncoder.encode(registrationRequest.password()));
         userToSave.setRegistrationDateTime(LocalDateTime.now());
+
+        //first user is admin
+        userToSave.setRole(repository.findAny().isEmpty() ?
+                UserRole.ADMIN :
+                UserRole.USER);
+
         try {
             var savedUser = repository.save(userToSave);
-
             log.info("User created successfully, id={}", savedUser.getId());
-            return mapper.toDomain(savedUser);
         } catch (DataIntegrityViolationException e) {
-            throw new IllegalStateException("User with this login already exists");
+            throw new IllegalStateException("This user already exists");
         }
     }
 }

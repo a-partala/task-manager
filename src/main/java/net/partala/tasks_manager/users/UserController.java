@@ -8,7 +8,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/users")
 public class UserController {
 
     private final Logger log = LoggerFactory.getLogger(UserController.class);
@@ -18,7 +17,7 @@ public class UserController {
         this.service = service;
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/users/{id}")
     public ResponseEntity<User> getUserById(
             @PathVariable("id") Long id
     ) {
@@ -26,15 +25,5 @@ public class UserController {
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(service.getUserById(id));
-    }
-
-    @PostMapping
-    public ResponseEntity<User> createUser(
-            @RequestBody @Valid User userToCreate
-    ) {
-        log.info("Called createUser");
-
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(service.createUser(userToCreate));
     }
 }
