@@ -3,12 +3,12 @@ version: '3.8'
 services:
   db:
     image: postgres:15
-    container_name: tasks-manager-db
+    container_name: task-manager-db
     restart: always
     environment:
       POSTGRES_USER: taskuser
       POSTGRES_PASSWORD: taskpass
-      POSTGRES_DB: tasksdb
+      POSTGRES_DB: taskdb
     ports:
       - "5432:5432"
     volumes:
@@ -16,7 +16,7 @@ services:
 
   app:
     build: .
-    container_name: tasks-manager-app
+    container_name: task-manager-app
     depends_on:
       - db
     ports:
@@ -25,7 +25,7 @@ services:
       JWT_SECRET: 9QMlRe73LGe0I+Fvv5jJGsd2yhgK5/GvGkN2fpoahmc=
       JWT_EXPIRATION_MINUTES: 30
       USER_ASSIGNED_TASKS_LIMIT: 5
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/tasksdb
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/taskdb
       SPRING_DATASOURCE_USERNAME: taskuser
       SPRING_DATASOURCE_PASSWORD: taskpass
 

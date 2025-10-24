@@ -9,9 +9,9 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>net.partala</groupId>
-	<artifactId>tasks-manager</artifactId>
+	<artifactId>task-manager</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>tasks-manager</name>
+	<name>task-manager</name>
 	<description>Task Manager</description>
 	<url/>
 	<licenses>
