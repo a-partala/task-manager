@@ -2,13 +2,11 @@ package net.partala.tasks_manager.auth;
 
 import jakarta.validation.Valid;
 import net.partala.tasks_manager.auth.jwt.JwtResponse;
-import net.partala.tasks_manager.auth.jwt.JwtService;
 import net.partala.tasks_manager.users.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,16 +18,13 @@ public class AuthController {
 
     private final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
-    private final JwtService jwtService;
     private final UserService userService;
 
     public AuthController(
             AuthService authService,
-            JwtService jwtService,
             UserService userService
     ) {
         this.authService = authService;
-        this.jwtService = jwtService;
         this.userService = userService;
     }
 

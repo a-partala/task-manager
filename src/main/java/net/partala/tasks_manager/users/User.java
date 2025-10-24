@@ -18,7 +18,7 @@ public record User(
         String email,
 
         @NotNull
-        @Size(min = 8)
+        @Size(min = 8, max = 32)
         String password,
 
         @Null
