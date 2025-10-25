@@ -1,6 +1,7 @@
 package net.partala.task_manager.tasks;
 
 import jakarta.validation.Valid;
+import net.partala.task_manager.users.UserIdRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -95,13 +96,13 @@ public class TaskController {
     @PostMapping("/{taskId}/start")
     public ResponseEntity<Task> startTask(
             @PathVariable Long taskId,
-            @RequestBody Long assignedUserId
+            @RequestBody @Valid UserIdRequest request
     ) {
         log.info("Called startTask, id = {}", taskId);
 
         var startedTask = service.startTask(
                 taskId,
-                assignedUserId
+                request.userId()
         );
 
         return ResponseEntity.status(HttpStatus.OK)

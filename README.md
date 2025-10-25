@@ -1,10 +1,24 @@
-## Task Manager
 
-# Description
+# Task Manager
+REST API for managing user tasks with authentication
 
-REST API for managing user tasks with authentication, built using Java 21, Spring Boot 3, PostgreSQL, and Docker.
+## Technologies
+Java 21, Spring Boot (Web, Security, Data JPA), PostgreSQL, Docker, Maven, Lombok
 
-# How to run
+## Functionality
+Basic task management with user authentication (roles to be added later)
+
+## Package structure
+```
+net.partala.task_manager
+├── auth/
+│   └── jwt/
+├── config/
+├── tasks/
+├── users/
+└── web/
+```
+## How to run
 
 1. Build the project:
    ./mvnw clean package
@@ -17,4 +31,40 @@ REST API for managing user tasks with authentication, built using Java 21, Sprin
 
 4. Access the API:
    http://localhost:8080
+## Environment Variables
+- `USER_ASSIGNED_TASKS_LIMIT` — limit for tasks assigned to one user  
+  (see others in `docker-compose.yml`)
 
+## API endpoints
+/auth/register
+/auth/login
+/users
+/tasks/{id}/start
+/tasks/{id}/complete
+/tasks/params=?creatorId=1&assignedUserId=1&status=1&priority=1&pageSize=1&pageNum=1
+## Request Examples
+	POST /auth/register
+	{
+		"username": "alexey",
+		"email": "alexey@gmail.com",
+		"password": "12345678"
+	}
+	
+	POST /auth/login
+	{
+		"username": "alexey",
+		"password": "12345678"
+	}
+	
+	POST /tasks
+	{
+		"title": "create front-end",
+		"creatorId": 1,
+		"deadlineDate": "2026-10-10T00:00:00",
+		"priority": "MEDIUM"
+	}
+
+	POST /tasks/{taskId}/start
+	{
+		"userId": 1
+	}
