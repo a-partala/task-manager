@@ -1,11 +1,13 @@
 package net.partala.task_manager.tasks;
 
 import jakarta.validation.Valid;
+import net.partala.task_manager.auth.SecurityUser;
 import net.partala.task_manager.users.UserIdRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -59,11 +61,14 @@ public class TaskController {
 
     @PostMapping
     public ResponseEntity<Task> createTask(
-            @RequestBody @Valid Task taskToCreate
+            @RequestBody @Valid Task taskToCreate,
+            @AuthenticationPrincipal SecurityUser securityUser
     ) {
         log.info("Called createTask");
 
-        var createdTask = service.createTask(taskToCreate);
+        var createdTask = service.createTask(
+                taskToCreate,
+                TaskActor.of(securityUser));
 
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(createdTask);
@@ -72,11 +77,15 @@ public class TaskController {
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTask(
             @PathVariable Long id,
-            @RequestBody @Valid Task taskToUpdate
+            @RequestBody @Valid Task taskData,
+            @AuthenticationPrincipal SecurityUser securityUser
     ) {
-        log.info("Called updateTask, id = {}, taskToUpdate = {}", id, taskToUpdate);
+        log.info("Called updateTask, id = {}, taskToUpdate = {}", id, taskData);
 
-        var updatedTask = service.updateTask(id, taskToUpdate);
+        var updatedTask = service.updateTask(
+                id,
+                taskData,
+                TaskActor.of(securityUser));
 
         return ResponseEntity.status(HttpStatus.OK)
                 .body(updatedTask);
@@ -84,11 +93,12 @@ public class TaskController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @AuthenticationPrincipal SecurityUser securityUser
     ) {
         log.info("Called deleteTask, id = {}", id);
 
-        service.deleteTask(id);
+        service.deleteTask(id, TaskActor.of(securityUser));
 
         return ResponseEntity.status(HttpStatus.OK).build();
     }
@@ -96,13 +106,15 @@ public class TaskController {
     @PostMapping("/{taskId}/start")
     public ResponseEntity<Task> startTask(
             @PathVariable Long taskId,
-            @RequestBody @Valid UserIdRequest request
+            @RequestBody @Valid UserIdRequest request,
+            @AuthenticationPrincipal SecurityUser securityUser
     ) {
         log.info("Called startTask, id = {}", taskId);
 
         var startedTask = service.startTask(
                 taskId,
-                request.userId()
+                request.userId(),
+                TaskActor.of(securityUser)
         );
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -111,12 +123,13 @@ public class TaskController {
 
     @PostMapping("/{id}/complete")
     public ResponseEntity<Task> completeTask(
-            @PathVariable Long id
+            @PathVariable Long id,
+            @AuthenticationPrincipal SecurityUser securityUser
     ) {
         log.info("Called completeTask, id = {}", id);
-
         var completedTask = service.completeTask(
-                id
+                id,
+                TaskActor.of(securityUser)
         );
 
         return ResponseEntity.status(HttpStatus.OK)

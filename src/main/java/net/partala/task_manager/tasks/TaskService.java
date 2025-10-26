@@ -5,6 +5,7 @@ import net.partala.task_manager.users.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,15 +39,11 @@ public class TaskService {
     }
 
     public Task createTask(
-            Task taskToCreate
+            Task taskToCreate,
+            TaskActor actor
     ) {
-        var creator = userService.getUserEntityById(
-                taskToCreate.creatorId());
-        var assignUser = taskToCreate.assignedUserId() == null ?
-                null :
-                userService.getUserEntityById(
-                    taskToCreate.assignedUserId());
-        var taskToSave = mapper.toEntity(taskToCreate, creator, assignUser);
+        var creator = userService.getUserEntityById(actor.getId());
+        var taskToSave = mapper.toEntity(taskToCreate, creator, null);
         taskToSave.setStatus(TaskStatus.CREATED);
         taskToSave.setCreateDateTime(LocalDateTime.now());
         var savedTaskEntity = repository.save(taskToSave);
@@ -58,33 +55,39 @@ public class TaskService {
 
     @Transactional
     public Task updateTask(
-            Long id,
-            Task taskToUpdate
+            Long taskId,
+            Task taskData,
+            TaskActor actor
     ) {
         var taskEntity = repository
-                .findById(id)
+                .findById(taskId)
                 .orElseThrow(() -> new NoSuchElementException(
-            "Not found task with id = " + id
+            "Not found task with id = " + taskId
         ));
+
+        if(!actor.canUpdate(taskEntity)) {
+            throw new AccessDeniedException("You cannot update this task, id = " + taskId);
+        }
         if(taskEntity.getStatus() == TaskStatus.DONE) {
-            throw new IllegalStateException("Cannot update done task. Change state first. id = " + id);
+            throw new IllegalStateException("Cannot update done task. Change state first. id = " + taskId);
         }
 
+        taskEntity.setTitle(taskData.title());
+        taskEntity.setPriority(taskData.priority());
+        taskEntity.setDeadlineDate(taskData.deadlineDate());
         taskEntity.setAssignedUser(
                 userService.getUserEntityById(
-                        taskToUpdate.assignedUserId()));
-        taskEntity.setTitle(taskToUpdate.title());
-        taskEntity.setPriority(taskToUpdate.priority());
-        taskEntity.setDeadlineDate(taskToUpdate.deadlineDate());
+                        taskData.assignedUserId()));
 
         var updatedTask = repository.save(taskEntity);
 
-        log.info("Task updated successfully, id = {}, updatedTask = {}", id, updatedTask);
+        log.info("Task updated successfully, id = {}, updatedTask = {}", taskId, updatedTask);
         return mapper.toDomain(updatedTask);
     }
 
     public void deleteTask(
-            Long id
+            Long id,
+            TaskActor actor
     ) {
         if(!repository.existsById(id)) {
             throw new NoSuchElementException("Not found task with id = " + id);
@@ -97,12 +100,9 @@ public class TaskService {
     @Transactional
     public Task startTask(
             Long taskId,
-            Long assignUserWithId
+            Long assignUserWithId,
+            TaskActor actor
     ) {
-
-        if(assignUserWithId == null || assignUserWithId <= 0) {
-            throw new IllegalArgumentException("Incorrect user id, id = " + assignUserWithId);
-        }
 
         var taskEntityToStart = repository
                 .findById(taskId)
@@ -110,20 +110,30 @@ public class TaskService {
                         "Cannot find task with id = " + taskId
                 ));
 
-        if(!taskEntityToStart.getAssignedUser().getId()
-                .equals(assignUserWithId)) {
+        if(!actor.canStartTask(taskEntityToStart)) {
+            throw new AccessDeniedException("You cannot start this task, id = " + taskId);
+        }
 
-            if(userService.canUserTakeTask(assignUserWithId)) {
-                taskEntityToStart.setAssignedUser(
-                        userService.getUserEntityById(assignUserWithId)
-                );
-            } else {
-                throw new IllegalStateException("Cannot assign task to user, he already has max allowed amount");
+        boolean isSameAssignedUser = taskEntityToStart.getAssignedUser() != null &&
+                taskEntityToStart
+                .getAssignedUser()
+                .getId()
+                .equals(assignUserWithId);
 
-            }
+        if(taskEntityToStart.getStatus() == TaskStatus.IN_PROGRESS && isSameAssignedUser) {
+            throw new IllegalStateException("User is already working on task with id = " + taskId);
+        }
+
+        if(!userService.canUserTakeTask(assignUserWithId)) {
+            throw new IllegalStateException("Cannot assign task to the user, he already has max allowed amount");
         }
 
         taskEntityToStart.setStatus(TaskStatus.IN_PROGRESS);
+        if(!isSameAssignedUser) {
+            taskEntityToStart.setAssignedUser(
+                    userService.getUserEntityById(assignUserWithId)
+            );
+        }
 
         var savedTask = repository.save(taskEntityToStart);
 
@@ -133,24 +143,31 @@ public class TaskService {
 
     @Transactional
     public Task completeTask(
-            Long id
-    ) {
+            Long taskId,
+            TaskActor actor) {
 
-        var taskToComplete = repository
-                .findById(id)
+        var taskToComplete = repository.findById(taskId)
                 .orElseThrow(() -> new NoSuchElementException(
-                        "Not found task with id = " + id
+                        "Not found task with id = " + taskId
                 ));
-        if(taskToComplete.getDeadlineDate() == null
-        || taskToComplete.getAssignedUser() == null) {
+
+        if(taskToComplete.getAssignedUser() == null) {
             throw new IllegalArgumentException("Task doesn't have essential data");
         }
+
+        if(taskToComplete.getStatus() == TaskStatus.DONE) {
+            throw new IllegalStateException("Task is already done, id = " + taskId);
+        }
+
+        if(!actor.canComplete(taskToComplete)) {
+            throw new AccessDeniedException("You cannot complete this task, id = " + taskId);
+        }
+
         taskToComplete.setStatus(TaskStatus.DONE);
         taskToComplete.setDoneDateTime(LocalDateTime.now());
-
         var savedTask = repository.save(taskToComplete);
 
-        log.info("Task completed successfully, id = {}", id);
+        log.info("Task completed successfully, id = {}", taskId);
         return mapper.toDomain(savedTask);
     }
 

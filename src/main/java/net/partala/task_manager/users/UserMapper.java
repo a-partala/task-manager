@@ -16,7 +16,7 @@ public class UserMapper {
                 entity.getEmail(),
                 entity.getPassword(),
                 entity.getRegistrationDateTime(),
-                entity.getRole(),
+                entity.getRoles(),
                 entity.getTasks() == null ?
                         null :
                         entity.getTasks()
@@ -33,7 +33,7 @@ public class UserMapper {
                 task.email(),
                 task.password(),
                 task.registrationDateTime(),
-                task.role(),
+                task.roles(),
                 tasks
         );
     }

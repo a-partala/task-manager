@@ -7,6 +7,7 @@ import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -15,6 +16,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 @Service
 @ConfigurationProperties(prefix = "app.jwt")
@@ -35,9 +37,13 @@ public class JwtService {
     public String generateToken(UserDetails userDetails) {
         Instant now = Instant.now();
         Instant expire = now.plus(Duration.ofMinutes(expirationMinutes));
-
+        var roles = userDetails.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .toList();
         return Jwts.builder()
                 .setSubject(userDetails.getUsername())
+                .claim("roles", roles)
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expire))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
@@ -53,6 +59,11 @@ public class JwtService {
 
         Date expire = parseAllClaims(token).getExpiration();
         return expire.toInstant();
+    }
+
+    public List<String> extractRoles(String token) {
+        var claims = parseAllClaims(token);
+        return (List<String>) claims.get("roles", List.class);
     }
 
     public boolean isTokenValid(

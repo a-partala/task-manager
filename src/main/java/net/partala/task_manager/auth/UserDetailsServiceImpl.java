@@ -2,19 +2,16 @@ package net.partala.task_manager.auth;
 
 import net.partala.task_manager.users.UserRepository;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-
 @Service
-public class CustomUserDetailsService implements UserDetailsService {
+public class UserDetailsServiceImpl implements UserDetailsService {
 
     private final UserRepository userRepository;
 
-    public CustomUserDetailsService(UserRepository userRepository) {
+    public UserDetailsServiceImpl(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
@@ -27,10 +24,14 @@ public class CustomUserDetailsService implements UserDetailsService {
                         "User not found: " + username
                 ));
 
-        return new User(
+        return new SecurityUser(
+                user.getId(),
                 user.getUsername(),
                 user.getPassword(),
-                List.of(user.getRole())
+                user.getRoles()
+                        .stream()
+                        .map(Enum::name)
+                        .toList()
         );
     }
 }

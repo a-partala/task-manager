@@ -46,7 +46,7 @@ public class AuthController {
     ) {
         log.info("Called login");
 
-        var response = authService.getResponse(loginRequest);
+        var response = authService.authenticate(loginRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
     }

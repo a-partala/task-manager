@@ -26,7 +26,7 @@ public class AuthService {
         this.jwtService = jwtService;
     }
 
-    public JwtResponse getResponse(LoginRequest loginRequest) {
+    public JwtResponse authenticate(LoginRequest loginRequest) {
 
         var authToken = new UsernamePasswordAuthenticationToken(
                 loginRequest.username(),

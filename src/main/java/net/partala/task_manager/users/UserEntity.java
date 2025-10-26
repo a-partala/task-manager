@@ -33,7 +33,7 @@ public class UserEntity {
     private LocalDateTime registrationDateTime;
 
     @Enumerated(EnumType.STRING)
-    private UserRole role;
+    private List<UserRole> roles;
 
     @JsonIgnore
     @OneToMany(mappedBy = "assignedUser")

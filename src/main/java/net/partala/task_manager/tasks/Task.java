@@ -13,9 +13,10 @@ public record Task(
 
         String title,
 
-        @NotNull
+        @Null
         Long creatorId,
 
+        @Null
         Long assignedUserId,
 
         @Null

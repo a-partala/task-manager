@@ -1,13 +1,16 @@
 package net.partala.task_manager.users;
 
+import jakarta.persistence.EntityNotFoundException;
 import net.partala.task_manager.auth.RegistrationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.NoSuchElementException;
 
 @Service
@@ -69,10 +72,10 @@ public class UserService {
         userToSave.setPassword(passwordEncoder.encode(registrationRequest.password()));
         userToSave.setRegistrationDateTime(LocalDateTime.now());
 
-        //first user is admin
-        userToSave.setRole(repository.findAny().isEmpty() ?
+        var role = repository.findAny().isEmpty() ?
                 UserRole.ADMIN :
-                UserRole.USER);
+                UserRole.USER;
+        userToSave.setRoles(List.of(role));
 
         try {
             var savedUser = repository.save(userToSave);
@@ -80,5 +83,21 @@ public class UserService {
         } catch (DataIntegrityViolationException e) {
             throw new IllegalStateException("This user already exists");
         }
+    }
+
+    @Transactional
+    public User promote(Long id) {
+
+        var userToPromote = getUserEntityById(id);
+
+        if(userToPromote.getRoles().contains(UserRole.ADMIN)) {
+            throw new IllegalStateException("User is ADMIN already");
+        }
+
+        userToPromote.setRoles(List.of(UserRole.ADMIN));
+
+        var savedUser = repository.save(userToPromote);
+
+        return mapper.toDomain(savedUser);
     }
 }
