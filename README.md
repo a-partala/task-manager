@@ -3,7 +3,7 @@
 REST API for managing user tasks with authentication
 
 ## Technologies
-Java 21, Spring Boot (Web, Security, Data JPA), PostgreSQL, Docker, Maven, Lombok
+Java 21, Spring Boot (Web, Security, Data JPA), PostgreSQL, Docker, JUnit, Mockito, Maven, Lombok
 
 ## Functionality
 Basic task management with user authentication (roles to be added later)
