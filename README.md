@@ -6,7 +6,7 @@ REST API for managing user tasks with authentication
 Java 21, Spring Boot (Web, Security, Data JPA), PostgreSQL, Docker, JUnit, Mockito, Maven, Lombok
 
 ## Functionality
-Basic task management with user authentication (roles to be added later)
+Basic task management with user authentication and role access
 
 ## Package structure
 ```
