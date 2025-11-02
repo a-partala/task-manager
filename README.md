@@ -32,16 +32,21 @@ net.partala.task_manager
 4. Access the API:
    http://localhost:8080
 ## Environment Variables
-- `USER_ASSIGNED_TASKS_LIMIT` — limit for tasks assigned to one user  
+- `USER_ASSIGNED_TASKS_LIMIT` - limit for tasks assigned to one user  
   (see others in `docker-compose.yml`)
 
 ## API endpoints
-/auth/register
-/auth/login
-/users
-/tasks/{id}/start
-/tasks/{id}/complete
-/tasks/params=?creatorId=1&assignedUserId=1&status=1&priority=1&pageSize=1&pageNum=1
+```
+POST /auth/register - create new user
+POST /auth/login - authenticate and get JWT
+POST /auth/email-verification-token - temporary, generate verification token
+POST /auth/verify-email?token=TOKEN - verify email with token
+GET /users/{id} - get user by id
+
+POST /tasks/{id}/start - start task or assign user to it
+POST /tasks/{id}/complete - mark task as completed
+GET /tasks?creatorId=1&creatorId=1&assignedUserId=1&status=DONE&priority=HIGH&pageSize=1&pageNum=1 - get tasks with filters
+```
 ## Request Examples
 	POST /auth/register
 	{
