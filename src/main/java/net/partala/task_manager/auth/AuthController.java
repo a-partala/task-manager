@@ -7,10 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/auth")
@@ -18,14 +16,11 @@ public class AuthController {
 
     private final Logger log = LoggerFactory.getLogger(AuthController.class);
     private final AuthService authService;
-    private final UserService userService;
 
     public AuthController(
-            AuthService authService,
-            UserService userService
+            AuthService authService
     ) {
         this.authService = authService;
-        this.userService = userService;
     }
 
     @PostMapping("/register")
@@ -35,7 +30,7 @@ public class AuthController {
     ) {
         log.info("Called register");
 
-        userService.createUser(registrationRequest);
+        authService.register(registrationRequest);
         return ResponseEntity.status(HttpStatus.CREATED).build();
     }
 
@@ -49,5 +44,29 @@ public class AuthController {
         var response = authService.authenticate(loginRequest);
         return ResponseEntity.status(HttpStatus.OK)
                 .body(response);
+    }
+
+    //todo: actually send verification
+    @PostMapping("/send-email-verification")
+    public ResponseEntity<JwtResponse> sendEmailVerification(
+            @AuthenticationPrincipal SecurityUser securityUser
+    ) {
+        log.info("Called getEmailToken");
+
+        var jwtResponse = authService.getEmailToken(securityUser);
+        return ResponseEntity.status(HttpStatus.OK)
+                .body(jwtResponse);
+    }
+
+    @PostMapping("/verify-email")
+    public ResponseEntity<Void> verifyEmail(
+            @RequestParam(value = "token", required = true)
+            String token
+    ) {
+        log.info("Called verifyEmail");
+
+        authService.verifyEmail(token);
+        return ResponseEntity.status(HttpStatus.OK)
+                .build();
     }
 }

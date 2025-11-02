@@ -6,6 +6,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.Setter;
+import net.partala.task_manager.auth.SecurityUser;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -36,12 +37,18 @@ public class JwtService {
         Instant now = Instant.now();
         Instant expire = now.plus(Duration.ofMinutes(expirationMinutes));
 
+        SecurityUser user = (SecurityUser) userDetails;
         return Jwts.builder()
-                .setSubject(userDetails.getUsername())
+                .claim("userId", user.getId())
+                .setSubject(user.getUsername())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expire))
                 .signWith(getSigningKey(), SignatureAlgorithm.HS256)
                 .compact();
+    }
+
+    public Long extractUserId(String token) {
+        return parseAllClaims(token).get("userId", Long.class);
     }
 
     public String extractUsername(String token) {
@@ -58,11 +65,9 @@ public class JwtService {
     public boolean isTokenValid(
             String token,
             UserDetails userDetails) {
-        var username = userDetails.getUsername();
-        boolean isNotExpired = extractExpiration(token).isAfter(Instant.now());
+        var usernameFromToken = extractUsername(token);
 
-        return username.equals(userDetails.getUsername()) &&
-                isNotExpired;
+        return usernameFromToken.equals(userDetails.getUsername());
     }
 
     private Claims parseAllClaims(String token) {

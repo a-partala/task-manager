@@ -22,7 +22,8 @@ public class UserMapper {
                         entity.getTasks()
                             .stream()
                             .map(TaskEntity::getId)
-                            .toList()
+                            .toList(),
+                entity.isEmailVerified()
         );
     }
 
@@ -33,6 +34,7 @@ public class UserMapper {
                 task.email(),
                 task.password(),
                 task.registrationDateTime(),
+                task.emailVerified(),
                 task.roles(),
                 tasks
         );

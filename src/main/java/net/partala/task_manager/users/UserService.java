@@ -1,6 +1,5 @@
 package net.partala.task_manager.users;
 
-import jakarta.persistence.EntityNotFoundException;
 import net.partala.task_manager.auth.RegistrationRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,6 +69,7 @@ public class UserService {
         userToSave.setUsername(registrationRequest.username());
         userToSave.setEmail(registrationRequest.email());
         userToSave.setPassword(passwordEncoder.encode(registrationRequest.password()));
+        userToSave.setEmailVerified(false);
         userToSave.setRegistrationDateTime(LocalDateTime.now());
 
         var role = repository.findAny().isEmpty() ?
@@ -99,5 +99,12 @@ public class UserService {
         var savedUser = repository.save(userToPromote);
 
         return mapper.toDomain(savedUser);
+    }
+
+    public void verifyEmail(Long userId) {
+
+        var userEntity = getUserEntityById(userId);
+        userEntity.setEmailVerified(true);
+        repository.save(userEntity);
     }
 }

@@ -26,11 +26,15 @@ public class UserEntity {
     @Column(unique = true)
     private String username;
 
+    //todo: full check for uniqueness and verifying
     private String email;
 
     private String password;
 
     private LocalDateTime registrationDateTime;
+
+    @Column(name = "is_email_verified")
+    private boolean emailVerified;
 
     @Enumerated(EnumType.STRING)
     private List<UserRole> roles;

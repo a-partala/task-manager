@@ -10,10 +10,10 @@ public record User(
         @Null
         Long id,
 
-        @NotNull//todo: validate by hand "login || email"
+        @NotNull
         String login,
 
-        @NotNull//todo: validate by hand "login || email"
+        @NotNull
         @Email
         String email,
 
@@ -28,6 +28,9 @@ public record User(
         List<UserRole> roles,
 
         @Null
-        List<Long> assignedTaskIds
+        List<Long> assignedTaskIds,
+
+        @Null
+        boolean emailVerified
 ) {
 }
