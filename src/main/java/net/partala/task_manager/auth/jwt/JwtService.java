@@ -7,6 +7,8 @@ import io.jsonwebtoken.security.Keys;
 import lombok.Getter;
 import lombok.Setter;
 import net.partala.task_manager.auth.SecurityUser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
@@ -21,6 +23,7 @@ import java.util.Date;
 @ConfigurationProperties(prefix = "app.jwt")
 public class JwtService {
 
+    private final Logger log = LoggerFactory.getLogger(JwtService.class);
     @Setter
     private String secret;
     @Setter
@@ -33,13 +36,14 @@ public class JwtService {
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, TokenPurpose tokenPurpose) {
         Instant now = Instant.now();
         Instant expire = now.plus(Duration.ofMinutes(expirationMinutes));
 
         SecurityUser user = (SecurityUser) userDetails;
         return Jwts.builder()
                 .claim("userId", user.getId())
+                .claim("purpose", tokenPurpose.name())
                 .setSubject(user.getUsername())
                 .setIssuedAt(Date.from(now))
                 .setExpiration(Date.from(expire))
@@ -49,6 +53,10 @@ public class JwtService {
 
     public Long extractUserId(String token) {
         return parseAllClaims(token).get("userId", Long.class);
+    }
+
+    public TokenPurpose extractPurpose(String token) {
+        return TokenPurpose.valueOf(parseAllClaims(token).get("purpose", String.class));
     }
 
     public String extractUsername(String token) {

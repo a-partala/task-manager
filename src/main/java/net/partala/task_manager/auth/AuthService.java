@@ -3,11 +3,13 @@ package net.partala.task_manager.auth;
 import jakarta.validation.Valid;
 import net.partala.task_manager.auth.jwt.JwtResponse;
 import net.partala.task_manager.auth.jwt.JwtService;
+import net.partala.task_manager.auth.jwt.TokenPurpose;
 import net.partala.task_manager.users.UserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -48,7 +50,7 @@ public class AuthService {
                 loginRequest.password());
         authenticationManager.authenticate(authToken);
         var userDetails = userDetailsService.loadUserByUsername(loginRequest.username());
-        var jwt = jwtService.generateToken(userDetails);
+        var jwt = jwtService.generateToken(userDetails, TokenPurpose.ACCESS);
         var expiresAt = Instant.now().plus(Duration.ofMinutes(jwtService.getExpirationMinutes()));
         return new JwtResponse(
                 jwt,
@@ -62,7 +64,7 @@ public class AuthService {
     ) {
         log.info("Called getEmailToken");
 
-        var jwt = jwtService.generateToken(securityUser);
+        var jwt = jwtService.generateToken(securityUser, TokenPurpose.EMAIL_VERIFICATION);
         var expiresAt = Instant.now().plus(Duration.ofMinutes(jwtService.getExpirationMinutes()));
         return new JwtResponse(
                 jwt,
@@ -74,7 +76,14 @@ public class AuthService {
     public void verifyEmail(
             String token
     ) {
+
+        TokenPurpose purpose = jwtService.extractPurpose(token);
+        if(purpose != TokenPurpose.EMAIL_VERIFICATION) {
+            throw new AccessDeniedException("Token purpose is not allowed for this operation");
+        }
+
         Long userId = jwtService.extractUserId(token);
+
         userService.verifyEmail(userId);
     }
 

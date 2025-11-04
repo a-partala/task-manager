@@ -5,6 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.lang.NonNull;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -46,6 +47,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             var userDetails = userDetailsService.loadUserByUsername(username);
 
+            if(jwtService.extractPurpose(token) != TokenPurpose.ACCESS) {
+                throw new AccessDeniedException("Token purpose is not allowed for this operation");
+            }
             if(jwtService.isTokenValid(token, userDetails)) {
                 var auth = new UsernamePasswordAuthenticationToken(
                         userDetails,
