@@ -1,5 +1,6 @@
 package net.partala.task_manager.tasks;
 
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -26,7 +27,7 @@ public interface TaskRepository extends JpaRepository<TaskEntity, Long> {
             AND (:status IS NULL OR :status = t.status)
             AND (:priority IS NULL OR :priority = t.priority)
             """)
-    List<TaskEntity> searchAllByFilter(
+    Page<TaskEntity> searchAllByFilter(
             @Param("creatorId") Long creatorId,
             @Param("assignedUserId") Long assignedUserId,
             @Param("status") TaskStatus status,

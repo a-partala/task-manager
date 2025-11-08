@@ -9,8 +9,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Set;
 
 @Service
 public class UserService {
@@ -75,7 +77,7 @@ public class UserService {
         var role = repository.findAny().isEmpty() ?
                 UserRole.ADMIN :
                 UserRole.USER;
-        userToSave.setRoles(List.of(role));
+        userToSave.setRoles(new HashSet<>(Set.of(role)));
 
         try {
             var savedUser = repository.save(userToSave);
@@ -94,7 +96,7 @@ public class UserService {
             throw new IllegalStateException("User is ADMIN already");
         }
 
-        userToPromote.setRoles(List.of(UserRole.ADMIN));
+        userToPromote.setRoles(new HashSet<>(Set.of(UserRole.ADMIN)));
 
         var savedUser = repository.save(userToPromote);
 

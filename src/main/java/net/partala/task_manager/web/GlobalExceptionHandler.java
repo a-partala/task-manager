@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 
 import java.nio.file.AccessDeniedException;
 import java.time.LocalDateTime;
+import java.util.NoSuchElementException;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -69,7 +70,8 @@ public class GlobalExceptionHandler {
             {
                     IllegalStateException.class,
                     IllegalArgumentException.class,
-                    MethodArgumentNotValidException.class
+                    MethodArgumentNotValidException.class,
+                    NoSuchElementException.class
             })
     public ResponseEntity<ErrorResponseDTO> handleBadRequestException(Exception e) {
 

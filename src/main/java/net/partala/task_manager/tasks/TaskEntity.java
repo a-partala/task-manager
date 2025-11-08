@@ -35,9 +35,9 @@ public class TaskEntity {
     @Enumerated(EnumType.STRING)
     private TaskStatus status;
 
-    private LocalDateTime createDateTime;
+    private LocalDateTime createdAt;
 
-    private LocalDateTime deadlineDate;
+    private LocalDateTime deadlineDateTime;
 
     private LocalDateTime doneDateTime;
 

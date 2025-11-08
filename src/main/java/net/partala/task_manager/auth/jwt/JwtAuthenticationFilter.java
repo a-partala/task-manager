@@ -1,5 +1,6 @@
 package net.partala.task_manager.auth.jwt;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,25 +41,30 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         String token = authHeader.substring(7);
-        String username = jwtService.extractUsername(token);
 
-        if(username != null &&
-                SecurityContextHolder.getContext().getAuthentication() == null) {
+        try {
+            String username = jwtService.extractUsername(token);
 
-            var userDetails = userDetailsService.loadUserByUsername(username);
+            if(username != null &&
+                    SecurityContextHolder.getContext().getAuthentication() == null) {
 
-            if(jwtService.extractPurpose(token) != TokenPurpose.ACCESS) {
-                throw new AccessDeniedException("Token purpose is not allowed for this operation");
+                var userDetails = userDetailsService.loadUserByUsername(username);
+
+                if(jwtService.extractPurpose(token) != TokenPurpose.ACCESS) {
+                    throw new AccessDeniedException("Token purpose is not allowed for this operation");
+                }
+                if(jwtService.isTokenValid(token, userDetails)) {
+                    var auth = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
+                    auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(auth);
+                }
             }
-            if(jwtService.isTokenValid(token, userDetails)) {
-                var auth = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
-                auth.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(auth);
-            }
+        } catch (ExpiredJwtException e) {
+            throw new AccessDeniedException("Token is expired", e);
         }
 
         filterChain.doFilter(request, response);

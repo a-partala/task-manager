@@ -18,7 +18,7 @@ public class UserController {
         this.service = service;
     }
 
-    @GetMapping("/users/{id}")
+    @GetMapping("/{id}")
     public ResponseEntity<User> getUserById(
             @PathVariable("id") Long id
     ) {

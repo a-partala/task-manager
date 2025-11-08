@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 public class TaskService {
@@ -27,7 +26,7 @@ public class TaskService {
         this.mapper = mapper;
     }
 
-    public Task getTaskById(
+    public TaskResponse getTaskById(
             Long id
     ) {
         var taskEntity = repository.findById(id)
@@ -38,14 +37,27 @@ public class TaskService {
         return mapper.toDomain(taskEntity);
     }
 
-    public Task createTask(
-            Task taskToCreate,
+    private TaskEntity getTaskEntityById(Long id) {
+
+        return repository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException(
+                        "Not found task by id=" + id
+                ));
+    }
+
+    public TaskResponse createTask(
+            TaskRequest request,
             TaskActor actor
     ) {
         var creator = userService.getUserEntityById(actor.getId());
-        var taskToSave = mapper.toEntity(taskToCreate, creator, null);
+        var taskToSave = new TaskEntity();
+        taskToSave.setCreator(creator);
         taskToSave.setStatus(TaskStatus.CREATED);
-        taskToSave.setCreateDateTime(LocalDateTime.now());
+        taskToSave.setCreatedAt(LocalDateTime.now());
+
+        taskToSave.setTitle(request.title());
+        taskToSave.setDeadlineDateTime(request.deadlineDataTime());
+        taskToSave.setPriority(request.priority());
         var savedTaskEntity = repository.save(taskToSave);
 
         var savedTask = mapper.toDomain(savedTaskEntity);
@@ -54,16 +66,12 @@ public class TaskService {
     }
 
     @Transactional
-    public Task updateTask(
+    public TaskResponse updateTask(
             Long taskId,
-            Task taskData,
+            TaskRequest request,
             TaskActor actor
     ) {
-        var taskEntity = repository
-                .findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException(
-            "Not found task with id = " + taskId
-        ));
+        var taskEntity = getTaskEntityById(taskId);
 
         if(!actor.canUpdate(taskEntity)) {
             throw new AccessDeniedException("You cannot update this task, id = " + taskId);
@@ -72,12 +80,9 @@ public class TaskService {
             throw new IllegalStateException("Cannot update done task. Change state first. id = " + taskId);
         }
 
-        taskEntity.setTitle(taskData.title());
-        taskEntity.setPriority(taskData.priority());
-        taskEntity.setDeadlineDate(taskData.deadlineDate());
-        taskEntity.setAssignedUser(
-                userService.getUserEntityById(
-                        taskData.assignedUserId()));
+        taskEntity.setTitle(request.title());
+        taskEntity.setPriority(request.priority());
+        taskEntity.setDeadlineDateTime(request.deadlineDataTime());
 
         var updatedTask = repository.save(taskEntity);
 
@@ -89,8 +94,10 @@ public class TaskService {
             Long id,
             TaskActor actor
     ) {
-        if(!repository.existsById(id)) {
-            throw new NoSuchElementException("Not found task with id = " + id);
+        var task = getTaskEntityById(id);
+
+        if(!actor.canDelete(task)) {
+            throw new AccessDeniedException("You cannot delete this task, id = " + id);
         }
 
         repository.deleteById(id);
@@ -98,17 +105,13 @@ public class TaskService {
     }
 
     @Transactional
-    public Task startTask(
+    public TaskResponse startTask(
             Long taskId,
             Long assignUserWithId,
             TaskActor actor
     ) {
 
-        var taskEntityToStart = repository
-                .findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Cannot find task with id = " + taskId
-                ));
+        var taskEntityToStart = getTaskEntityById(taskId);
 
         if(!actor.canStartTask(taskEntityToStart)) {
             throw new AccessDeniedException("You cannot start this task, id = " + taskId);
@@ -142,14 +145,11 @@ public class TaskService {
     }
 
     @Transactional
-    public Task completeTask(
+    public TaskResponse completeTask(
             Long taskId,
             TaskActor actor) {
 
-        var taskToComplete = repository.findById(taskId)
-                .orElseThrow(() -> new NoSuchElementException(
-                        "Not found task with id = " + taskId
-                ));
+        var taskToComplete = getTaskEntityById(taskId);
 
         if(taskToComplete.getAssignedUser() == null) {
             throw new IllegalArgumentException("Task doesn't have essential data");
@@ -171,7 +171,7 @@ public class TaskService {
         return mapper.toDomain(savedTask);
     }
 
-    public List<Task> searchAllByFilter(TaskSearchFilter filter) {
+    public List<TaskResponse> searchAllByFilter(TaskSearchFilter filter) {
 
         int pageSize = filter.pageSize() != null ?
                 filter.pageSize() : 10;

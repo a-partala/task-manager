@@ -24,7 +24,7 @@ public class TaskController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Task> getTaskById(
+    public ResponseEntity<TaskResponse> getTaskById(
             @PathVariable("id") Long id
     ){
         log.info("Called getTaskById, id={}", id);
@@ -35,7 +35,7 @@ public class TaskController {
     }
 
     @GetMapping
-    public ResponseEntity<List<Task>> searchAllByFilter(
+    public ResponseEntity<List<TaskResponse>> searchAllByFilter(
             @RequestParam(value = "creatorId", required = false) Long creatorId,
             @RequestParam(value = "assignedUserId", required = false) Long assignedUserId,
             @RequestParam(value = "status", required = false) TaskStatus status,
@@ -60,14 +60,14 @@ public class TaskController {
     }
 
     @PostMapping
-    public ResponseEntity<Task> createTask(
-            @RequestBody @Valid Task taskToCreate,
+    public ResponseEntity<TaskResponse> createTask(
+            @RequestBody @Valid TaskRequest request,
             @AuthenticationPrincipal SecurityUser securityUser
     ) {
         log.info("Called createTask");
 
         var createdTask = service.createTask(
-                taskToCreate,
+                request,
                 TaskActor.of(securityUser));
 
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -75,16 +75,16 @@ public class TaskController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(
+    public ResponseEntity<TaskResponse> updateTask(
             @PathVariable Long id,
-            @RequestBody @Valid Task taskData,
+            @RequestBody @Valid TaskRequest request,
             @AuthenticationPrincipal SecurityUser securityUser
     ) {
-        log.info("Called updateTask, id = {}, taskToUpdate = {}", id, taskData);
+        log.info("Called updateTask, id = {}, taskToUpdate = {}", id, request);
 
         var updatedTask = service.updateTask(
                 id,
-                taskData,
+                request,
                 TaskActor.of(securityUser));
 
         return ResponseEntity.status(HttpStatus.OK)
@@ -104,7 +104,7 @@ public class TaskController {
     }
 
     @PostMapping("/{taskId}/start")
-    public ResponseEntity<Task> startTask(
+    public ResponseEntity<TaskResponse> startTask(
             @PathVariable Long taskId,
             @RequestBody @Valid UserIdRequest request,
             @AuthenticationPrincipal SecurityUser securityUser
@@ -122,7 +122,7 @@ public class TaskController {
     }
 
     @PostMapping("/{id}/complete")
-    public ResponseEntity<Task> completeTask(
+    public ResponseEntity<TaskResponse> completeTask(
             @PathVariable Long id,
             @AuthenticationPrincipal SecurityUser securityUser
     ) {

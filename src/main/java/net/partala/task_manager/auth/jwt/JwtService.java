@@ -1,6 +1,7 @@
 package net.partala.task_manager.auth.jwt;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
@@ -73,9 +74,15 @@ public class JwtService {
     public boolean isTokenValid(
             String token,
             UserDetails userDetails) {
-        var usernameFromToken = extractUsername(token);
 
-        return usernameFromToken.equals(userDetails.getUsername());
+        try {
+            var usernameFromToken = extractUsername(token);
+
+            return usernameFromToken.equals(userDetails.getUsername());
+        } catch (ExpiredJwtException e) {
+            log.debug("Token expired for user {}", userDetails.getUsername());
+            return false;
+        }
     }
 
     private Claims parseAllClaims(String token) {

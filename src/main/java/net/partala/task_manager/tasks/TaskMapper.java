@@ -6,9 +6,9 @@ import org.springframework.stereotype.Component;
 @Component
 public class TaskMapper {
 
-    public Task toDomain(TaskEntity entity) {
+    public TaskResponse toDomain(TaskEntity entity) {
 
-        return new Task(
+        return new TaskResponse(
                 entity.getId(),
                 entity.getTitle(),
                 entity.getCreator() == null ?
@@ -18,23 +18,23 @@ public class TaskMapper {
                         null :
                         entity.getAssignedUser().getId(),
                 entity.getStatus(),
-                entity.getCreateDateTime(),
-                entity.getDeadlineDate(),
+                entity.getCreatedAt(),
+                entity.getDeadlineDateTime(),
                 entity.getDoneDateTime(),
                 entity.getPriority()
         );
     }
 
-    public TaskEntity toEntity(Task task, UserEntity creator, UserEntity assignedUser) {
+    public TaskEntity toEntity(TaskResponse task, UserEntity creator, UserEntity assignedUser) {
         return new TaskEntity(
                 task.id(),
                 task.title(),
                 creator,
                 assignedUser,
                 task.status(),
-                task.createDateTime(),
+                task.createdAt(),
                 task.deadlineDate(),
-                task.doneDateTime(),
+                task.completedAt(),
                 task.priority()
         );
     }

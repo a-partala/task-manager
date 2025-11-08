@@ -20,10 +20,7 @@ public class TaskActor {
         roles = securityUser.getAuthorities()
                 .stream()
                 .map(a ->
-                        UserRole.valueOf(
-                                a.getAuthority()
-                                        .replace("ROLE_", "")
-                        )
+                        UserRole.valueOf(a.getAuthority())
                 )
                 .toList();
     }
@@ -37,6 +34,9 @@ public class TaskActor {
     }
 
     public boolean isCreatorOf(TaskEntity task) {
+        if(task.getCreator() == null) {
+            return false;
+        }
         return task.getCreator().getId().equals(id);
     }
 
@@ -60,6 +60,11 @@ public class TaskActor {
     }
 
     public boolean canUpdate(TaskEntity task) {
+
+        return isCreatorOf(task) || isAdmin();
+    }
+
+    public boolean canDelete(TaskEntity task) {
 
         return isCreatorOf(task) || isAdmin();
     }

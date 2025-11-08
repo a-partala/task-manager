@@ -3,7 +3,9 @@ package net.partala.task_manager.users;
 import jakarta.validation.constraints.*;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public record User(
 
@@ -17,7 +19,7 @@ public record User(
         @Email
         String email,
 
-        @NotNull
+        @NotBlank
         @Size(min = 8, max = 32)
         String password,
 
@@ -25,10 +27,10 @@ public record User(
         LocalDateTime registrationDateTime,
 
         @Null
-        List<UserRole> roles,
+        Set<UserRole> roles,
 
         @Null
-        List<Long> assignedTaskIds,
+        Set<Long> assignedTaskIds,
 
         @Null
         boolean emailVerified

@@ -81,7 +81,7 @@ public class TaskServiceTest {
         task.setAssignedUser(user);
         task.setStatus(TaskStatus.IN_PROGRESS);
 
-        when(mapper.toDomain(any())).thenReturn(mock(Task.class));
+        when(mapper.toDomain(any())).thenReturn(mock(TaskResponse.class));
         when(repository.findById(1L)).thenReturn(Optional.of(task));
 
         var actor = new TaskActor(2L, List.of(UserRole.ADMIN));

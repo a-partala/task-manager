@@ -9,7 +9,9 @@ import lombok.Setter;
 import net.partala.task_manager.tasks.TaskEntity;
 
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -36,10 +38,12 @@ public class UserEntity {
     @Column(name = "is_email_verified")
     private boolean emailVerified;
 
+    @CollectionTable
+    @ElementCollection(fetch = FetchType.EAGER)
     @Enumerated(EnumType.STRING)
-    private List<UserRole> roles;
+    private Set<UserRole> roles;
 
     @JsonIgnore
     @OneToMany(mappedBy = "assignedUser")
-    private List<TaskEntity> tasks;
+    private Set<TaskEntity> tasks;
 }

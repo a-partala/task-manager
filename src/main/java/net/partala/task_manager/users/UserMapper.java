@@ -3,7 +3,9 @@ package net.partala.task_manager.users;
 import net.partala.task_manager.tasks.TaskEntity;
 import org.springframework.stereotype.Component;
 
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Component
 public class UserMapper {
@@ -22,12 +24,12 @@ public class UserMapper {
                         entity.getTasks()
                             .stream()
                             .map(TaskEntity::getId)
-                            .toList(),
+                            .collect(Collectors.toSet()),
                 entity.isEmailVerified()
         );
     }
 
-    public UserEntity toEntity(User task, List<TaskEntity> tasks) {
+    public UserEntity toEntity(User task, Set<TaskEntity> tasks) {
         return new UserEntity(
                 task.id(),
                 task.login(),
@@ -35,7 +37,7 @@ public class UserMapper {
                 task.password(),
                 task.registrationDateTime(),
                 task.emailVerified(),
-                task.roles(),
+                new HashSet<>(task.roles()),
                 tasks
         );
     }
