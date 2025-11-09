@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
-import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
@@ -35,8 +34,8 @@ public class UserService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public User getUserById(Long id) {
-        return mapper.toDomain(getUserEntityById(id));
+    public UserResponse getUserById(Long id) {
+        return mapper.toResponse(getUserEntityById(id));
     }
 
     //For service-layer use only
@@ -88,7 +87,7 @@ public class UserService {
     }
 
     @Transactional
-    public User promote(Long id) {
+    public UserResponse promote(Long id) {
 
         var userToPromote = getUserEntityById(id);
 
@@ -100,7 +99,7 @@ public class UserService {
 
         var savedUser = repository.save(userToPromote);
 
-        return mapper.toDomain(savedUser);
+        return mapper.toResponse(savedUser);
     }
 
     public void verifyEmail(Long userId) {

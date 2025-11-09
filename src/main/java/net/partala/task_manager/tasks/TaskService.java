@@ -34,7 +34,7 @@ public class TaskService {
                         "Not found task by id=" + id
                 ));
 
-        return mapper.toDomain(taskEntity);
+        return mapper.toResponse(taskEntity);
     }
 
     private TaskEntity getTaskEntityById(Long id) {
@@ -60,7 +60,7 @@ public class TaskService {
         taskToSave.setPriority(request.priority());
         var savedTaskEntity = repository.save(taskToSave);
 
-        var savedTask = mapper.toDomain(savedTaskEntity);
+        var savedTask = mapper.toResponse(savedTaskEntity);
         log.info("Task created successfully, createdTask = {}", savedTask);
         return savedTask;
     }
@@ -87,7 +87,7 @@ public class TaskService {
         var updatedTask = repository.save(taskEntity);
 
         log.info("Task updated successfully, id = {}, updatedTask = {}", taskId, updatedTask);
-        return mapper.toDomain(updatedTask);
+        return mapper.toResponse(updatedTask);
     }
 
     public void deleteTask(
@@ -141,7 +141,7 @@ public class TaskService {
         var savedTask = repository.save(taskEntityToStart);
 
         log.info("Task started successfully, id = {}", taskId);
-        return mapper.toDomain(savedTask);
+        return mapper.toResponse(savedTask);
     }
 
     @Transactional
@@ -168,7 +168,7 @@ public class TaskService {
         var savedTask = repository.save(taskToComplete);
 
         log.info("Task completed successfully, id = {}", taskId);
-        return mapper.toDomain(savedTask);
+        return mapper.toResponse(savedTask);
     }
 
     public List<TaskResponse> searchAllByFilter(TaskSearchFilter filter) {
@@ -190,7 +190,7 @@ public class TaskService {
                 pageable
         )
                 .stream()
-                .map(mapper::toDomain)
+                .map(mapper::toResponse)
                 .toList();
     }
 }

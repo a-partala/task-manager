@@ -19,7 +19,7 @@ public class UserController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<User> getUserById(
+    public ResponseEntity<UserResponse> getUserById(
             @PathVariable("id") Long id
     ) {
         log.info("Called getUserById, id = {}", id);
@@ -30,7 +30,7 @@ public class UserController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/{id}/promote")
-    public ResponseEntity<User> promote(
+    public ResponseEntity<UserResponse> promote(
             @PathVariable("id") Long id
     ) {
         log.info("Called promote, id = {}", id);
